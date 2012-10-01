@@ -20,8 +20,8 @@ You should have received a copy of the GNU General Public License along with
 Wazapp. If not, see http://www.gnu.org/licenses/.
 '''
 
-from whatsapi.utilities import encodeString, S40MD5Digest, ByteArray
-from whatsapi.exceptions import *
+from utilities import encodeString, S40MD5Digest, ByteArray
+from exceptions import *
 
 class ProtocolTreeNode:
 

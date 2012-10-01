@@ -25,9 +25,9 @@ import random
 import socket
 import threading
 
-from whatsapi.utilities import str_base, S40MD5Digest, ByteArray
-from whatsapi.protocoltreenode import ProtocolTreeNode
-from whatsapi.exceptions import *
+from utilities import str_base, S40MD5Digest, ByteArray
+from protocoltreenode import ProtocolTreeNode
+from exceptions import *
 
 class Login(threading.Thread):
 

@@ -23,7 +23,7 @@ Wazapp. If not, see http://www.gnu.org/licenses/.
 import socket
 import sys
 
-from whatsapi.exceptions import *
+from exceptions import *
 
 class MySocketConnection(socket.socket):
 

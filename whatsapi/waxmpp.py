@@ -25,15 +25,15 @@ import threading
 import select
 import sys
 
-from whatsapi.utilities import S40MD5Digest
-from whatsapi.protocoltreenode import BinTreeNodeWriter, BinTreeNodeReader, \
+from utilities import S40MD5Digest
+from protocoltreenode import BinTreeNodeWriter, BinTreeNodeReader, \
     ProtocolTreeNode
-from whatsapi.connengine import MySocketConnection
-from whatsapi.login import Login
+from connengine import MySocketConnection
+from login import Login
 
-from whatsapi.message import Message
-from whatsapi.exceptions import *
-from whatsapi.signalslot import Signal
+from message import Message
+from exceptions import *
+from signalslot import Signal
 
 
 class WAEventHandler(object):
