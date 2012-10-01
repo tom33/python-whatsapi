@@ -16,3 +16,4 @@ TODO:
 I don't have time to work on this currently but feel free to submit a pull request.
 
 The license is the same as the Wazapp application
+
