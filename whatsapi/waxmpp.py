@@ -233,7 +233,7 @@ class StanzaReader(threading.Thread):
                 self.lastTreeRead = int(time.time()) * 1000
 
                 if node is not None:
-                    print node.toString()
+                    # print node.toString()
                     if ProtocolTreeNode.tagEquals(node, 'iq'):
                         iqType = node.getAttributeValue('type')
                         idx = node.getAttributeValue('id')
