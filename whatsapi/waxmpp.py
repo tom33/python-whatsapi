@@ -96,6 +96,9 @@ class WAEventHandler(object):
         '''(group, who)'''
         self.groupRemove = Signal()
 
+        ''' (groups: [{subject, id, owner}]) '''
+        self.groupsReceived = Signal()
+
         self.groupListReceived = Signal()
 
         self.lastSeenUpdated = Signal()
@@ -230,6 +233,7 @@ class StanzaReader(threading.Thread):
                 self.lastTreeRead = int(time.time()) * 1000
 
                 if node is not None:
+                    print node.toString()
                     if ProtocolTreeNode.tagEquals(node, 'iq'):
                         iqType = node.getAttributeValue('type')
                         idx = node.getAttributeValue('id')
@@ -242,6 +246,17 @@ class StanzaReader(threading.Thread):
                             if self.requests.has_key(idx):
                                 self.requests[idx](node, jid)
                                 del self.requests[idx]
+                            elif jid == 'g.us':
+                                children = node.getAllChildren()
+                                if len(children) > 0:
+                                    # List of groups received
+                                    if ProtocolTreeNode.tagEquals(children[0], 'group'):
+                                        self.connection.event.groupsReceived(map(lambda c: {
+                                            'subject': c.getAttributeValue('subject'),
+                                            'owner': c.getAttributeValue('owner'),
+                                            'id': c.getAttributeValue('id')
+                                            }, children))
+
                             elif idx.startswith(self.connection.user):
                                 accountNode = node.getChild(0)
                                 ProtocolTreeNode.require(accountNode, 'account')
@@ -657,6 +672,52 @@ class WAXMPP:
                                 None, 'expired')
         self.out.write(node)
 
+    def leaveGroup(self, group):
+        group_nodes = [ProtocolTreeNode('group', {'id': group})]
+        node = ProtocolTreeNode('leave', {'xmlns': 'w:g'}, group_nodes)
+
+        node_out = ProtocolTreeNode('iq', {
+            'id': str(int(time.time())) + '-0',
+            'type': 'set',
+            'to': 'g.us'
+            }, [node])
+
+        self.out.write(node_out)
+
+    def addParticipant(self, group, participant):
+        self.addParticipants(group, [participant])
+
+    def removeParticipant(self, group, participant):
+        self.removeParticipants(group, [participant])
+
+    def addParticipants(self, group, participants):
+        self.sendVerbParticipants(group, participants, 'add')
+
+    def removeParticipants(self, group, participants):
+        self.sendVerbParticipants(group, participants, 'remove')
+
+    def sendVerbParticipants(self, group, participants, verb):
+        participant_nodes = map(lambda p: ProtocolTreeNode('participants', {'jid': p}), participants)
+
+        node = ProtocolTreeNode(verb, {'xmlns': 'w:g'}, participant_nodes)
+        node_out = ProtocolTreeNode('iq', {
+            'id': str(int(time.time())) + '-0',
+            'type': 'set',
+            'to': group
+            }, [node])
+
+        self.out.write(node_out)
+
+    def setGroupSubject(self, group, subject):
+        node = ProtocolTreeNode('subject', {'xmlns': 'w:g', 'value': subject})
+        node_out = ProtocolTreeNode('iq', {
+            'id': str(int(time.time())) + '-0',
+            'type': 'set',
+            'to': group
+            }, [node])
+
+        self.out.write(node_out)
+
     def sendAvailableForChat(self):
         presenceNode = ProtocolTreeNode('presence',
                 {'name': self.push_name})
@@ -674,6 +735,42 @@ class WAXMPP:
         presenceNode = ProtocolTreeNode('presence', {'type': 'subscribe', 'to': to})
 
         self.out.write(presenceNode)
+
+    def getGroups(self):
+        self.sendGetGroups('participating')
+
+    def getOwningGroups(self):
+        self.sendGetGroups('owning')
+
+    def getParticipants(self, group):
+        node = ProtocolTreeNode('list', {'xmlns': 'w:g'})
+        node_out = ProtocolTreeNode('iq', {
+            'id': str(int(time.time())) + '-0',
+            'type': 'get',
+            'to': group
+            }, [node])
+
+        self.out.write(node_out)
+
+    def getServerProperties(self):
+        node = ProtocolTreeNode('list', {'xmlns': 'w:g', 'type': 'props'})
+        node_out = ProtocolTreeNode('iq', {
+            'id': str(int(time.time())) + '-0',
+            'type': 'get',
+            'to': 'g.us'
+            }, [node])
+
+        self.out.write(node_out)
+
+    def sendGetGroups(self, group_type):
+        node = ProtocolTreeNode('list', {'xmlns': 'w:g', 'type': group_type})
+        node_out = ProtocolTreeNode('iq', {
+            'id': str(int(time.time())) + '-0',
+            'type': 'get',
+            'to': 'g.us'
+            }, [node])
+
+        self.out.write(node_out)
 
     def sendMessage(self, fmsg):
         bodyNode = ProtocolTreeNode('body', None, None, fmsg.data)
